@@ -6,24 +6,24 @@ services:
     container_name: traefik
     command:
       - "--providers.docker=true"
-      - "--entrypoints.web.address=:${HTTP_PORT}"
-      - "--entrypoints.websecure.address=:${HTTPS_PORT}"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:44"
       - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
       - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53"
-      - "--certificatesresolvers.myresolver.acme.email=${CERTIFICATE_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.email=dawdwa@dawdwa.de"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       - "--accesslog=true"
       - "--accesslog.format=json"
     ports:
-      - "${HTTP_PORT}:${HTTP_PORT}"      # HTTP
-      - "${HTTPS_PORT}:${HTTPS_PORT}"    # HTTPS
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
       - "./static:/static" # static files
     environment:
-      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - CF_DNS_API_TOKEN=qNaX16lSKBEFuBZMJpi_nKc9Hju9kkOddGbhocXm
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.robots.rule=Path(`/static/robots.txt`)"
@@ -41,10 +41,10 @@ services:
     container_name: n8n
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=zX57Lp92CqFmT8rL
       - N8N_SECURE_COOKIE=true
-      - WEBHOOK_URL=${WEBHOOK_URL}
+      - WEBHOOK_URL=https://workflow.newflow.io
       - N8N_LOG_LEVEL=debug
       - N8N_LOG_OUTPUT=console
       - N8N_DIAGNOSTICS_ENABLED=false
@@ -54,11 +54,11 @@ services:
       - N8N_FOLDERS_ENABLED=true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.n8n.rule=Host(`${WEBHOOK_URL}`)"
+      - "traefik.http.routers.n8n.rule=Host(`workflow.newflow.io`)"
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.routers.n8n.tls.certresolver=myresolver"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
-      - "traefik.http.routers.n8n-web.rule=Host(`${WEBHOOK_URL}`)"
+      - "traefik.http.routers.n8n-web.rule=Host(`workflow.newflow.io`)"
       - "traefik.http.routers.n8n-web.entrypoints=web"
       - "traefik.http.routers.n8n-web.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
@@ -82,7 +82,7 @@ services:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "6333:${HTTP_PORT}"     # Expose nginx port 80 on host port 6333
+      - "6333:80"     # Expose nginx port 80 on host port 6333
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped

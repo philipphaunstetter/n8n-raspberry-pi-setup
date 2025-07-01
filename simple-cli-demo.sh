@@ -7,22 +7,20 @@ echo -e "\n${BLUE}${BOLD}=== Enhanced CLI Demo ===${NC}"
 
 section_header "n8n Setup Progress"
 
-info "Initializing setup..."
-step "Checking system requirements"
-success "Docker found and running"
-success "Docker Compose v2 available"
-warning "Optional: Git not found"
+# Tool-like step formatting (Claude Code style)
+setup_step "check_dependencies" "Verify system requirements"
+docker_step "docker --version" "Check Docker installation"
+echo -e "     Docker version 24.0.6, build ed223bc"
 
-echo
-step "Processing configuration..."
+run_command "docker compose version" "Check Docker Compose version"
 
-# Simulate progress
-for i in {1..5}; do
-    echo -n "Processing step $i... "
-    sleep 0.5
-    echo -e "${GREEN}${CHECK}${NC}"
-done
+tool_step "Read" "Check configuration file" "/Users/user/setup.sh"
 
+setup_step "generate_config" "Create environment configuration"
+echo -e "     Generated .env with 15 variables"
+echo -e "     Generated docker-compose.yml with 3 services"
+
+# Traditional status messages
 echo
 success "Configuration generated successfully!"
 error "This is how an error would look"

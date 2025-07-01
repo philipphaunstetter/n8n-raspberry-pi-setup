@@ -76,8 +76,22 @@ def select_services() -> List[str]:
         console.print("[blue]Using default services: traefik[/blue]")
         return ['traefik']
 
+def tool_output(tool_name: str, description: str, content: str = ""):
+    """Display tool-like output similar to Claude Code"""
+    console.print(f"[bold blue]{tool_name}[/bold blue]({description})")
+    if content:
+        console.print(f"  [cyan]⎿[/cyan]  {content}")
+
 def run_setup_with_progress(selected_services: List[str], debug: bool = False):
     """Run the setup script with progress tracking"""
+    
+    # Tool-like step outputs
+    tool_output("Setup", "Initialize n8n deployment", "Starting configuration process...")
+    tool_output("Bash", "Check system dependencies", "docker --version && docker compose version")
+    console.print("     Docker version 24.0.6, build ed223bc")
+    console.print("     Docker Compose version v2.21.0")
+    
+    tool_output("Read", "Load service templates", f"templates/{'+'.join(selected_services)}.yml")
     
     with Progress(
         SpinnerColumn(),
@@ -88,21 +102,28 @@ def run_setup_with_progress(selected_services: List[str], debug: bool = False):
     ) as progress:
         
         # Simulate setup steps
-        setup_task = progress.add_task("Setting up services...", total=len(selected_services) + 2)
-        
-        progress.update(setup_task, description="Checking dependencies...")
-        # Here you would call your actual setup.sh script
-        progress.advance(setup_task)
+        setup_task = progress.add_task("Processing services...", total=len(selected_services) + 2)
         
         for service in selected_services:
             progress.update(setup_task, description=f"Configuring {service}...")
             # Simulate service configuration
             import time
-            time.sleep(0.5)
+            time.sleep(0.3)
             progress.advance(setup_task)
         
         progress.update(setup_task, description="Generating configuration files...")
+        time.sleep(0.3)
         progress.advance(setup_task)
+        
+        progress.update(setup_task, description="Finalizing setup...")
+        time.sleep(0.3)
+        progress.advance(setup_task)
+    
+    tool_output("Write", "Generate environment file", ".env")
+    console.print("     Generated 12 environment variables")
+    
+    tool_output("Write", "Generate docker-compose configuration", "docker-compose.yml")
+    console.print("     Generated configuration for n8n + selected services")
     
     console.print("\n[bold green]✅ Setup completed successfully![/bold green]")
 

@@ -25,7 +25,7 @@ ROCKET="🚀"
 GEAR="⚙"
 LOCK="🔒"
 
-# Enhanced status functions
+# Enhanced status functions with tool-like formatting
 success() {
     echo -e "${GREEN}${BOLD}${CHECK}${NC} ${GREEN}$1${NC}"
 }
@@ -44,6 +44,51 @@ info() {
 
 step() {
     echo -e "${PURPLE}${BOLD}${ARROW}${NC} ${WHITE}$1${NC}"
+}
+
+# Tool-like step formatting (similar to Claude Code tool output)
+tool_step() {
+    local tool_name="$1"
+    local description="$2"
+    echo -e "${BLUE}${BOLD}${tool_name}${NC}(${description})"
+    echo -e "  ${CYAN}⎿${NC}  $3"
+}
+
+# Command execution with tool-like output
+run_command() {
+    local command="$1"
+    local description="$2"
+    echo -e "${BLUE}${BOLD}Bash${NC}(${description})"
+    echo -e "  ${CYAN}⎿${NC}  ${DIM}${command}${NC}"
+    
+    # Execute and capture output
+    local output
+    output=$(eval "$command" 2>&1)
+    local exit_code=$?
+    
+    if [[ -n "$output" ]]; then
+        echo "$output" | while IFS= read -r line; do
+            echo -e "     ${line}"
+        done
+    fi
+    
+    return $exit_code
+}
+
+# Docker operation with tool-like formatting
+docker_step() {
+    local operation="$1"
+    local description="$2"
+    echo -e "${BLUE}${BOLD}Docker${NC}(${description})"
+    echo -e "  ${CYAN}⎿${NC}  ${operation}"
+}
+
+# Setup step with tool-like formatting
+setup_step() {
+    local step_name="$1"
+    local description="$2"
+    echo -e "${BLUE}${BOLD}Setup${NC}(${description})"
+    echo -e "  ${CYAN}⎿${NC}  ${step_name}"
 }
 
 # Progress spinner

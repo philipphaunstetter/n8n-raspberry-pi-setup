@@ -48,7 +48,7 @@ A comprehensive, modular setup script for deploying n8n (workflow automation) wi
 
 ## 🛠️ Installation
 
-### Quick Start
+### One-Command Setup
 
 1. **Clone the repository**:
    ```bash
@@ -56,48 +56,42 @@ A comprehensive, modular setup script for deploying n8n (workflow automation) wi
    cd n8n-raspberry-pi-setup
    ```
 
-2. **Make the setup script executable**:
+2. **Run the unified installation script**:
    ```bash
-   chmod +x setup.sh
+   ./install.sh
    ```
 
-3. **Run the setup**:
-   ```bash
-   ./setup.sh
-   ```
+That's it! The script handles everything automatically including Python environment setup, dependency checking, and service deployment.
 
-### Setup Options
+### Installation Options
 
 | Command | Description |
 |---------|-------------|
-| `./setup.sh` | Full guided setup with infrastructure requirements |
-| `./setup.sh --debug` | Generate configuration without starting services |
-| `./setup.sh --help` | Show help and usage information |
+| `./install.sh` | **Full interactive setup** with infrastructure guide and service deployment |
+| `./install.sh --debug` | **Test mode** - simulate setup without making changes |
+| `./install.sh --help` | Show help and usage information |
 
-### Enhanced CLI (Optional)
+### Enhanced Features
 
-For a more modern CLI experience with rich formatting and interactive menus:
+The unified installation script includes:
 
-1. **Install enhanced CLI tools**:
-   ```bash
-   ./install-cli.sh
-   ```
+**🎨 Professional CLI Interface**:
+- Claude Code-style tool output formatting  
+- Rich colors and Unicode symbols
+- Progress tracking and status updates
+- Interactive service selection menus
 
-2. **Use the enhanced CLI**:
-   ```bash
-   ./n8n-cli.py setup          # Interactive setup with rich formatting
-   ./n8n-cli.py setup --debug  # Debug mode
-   ./n8n-cli.py status         # Check service status
-   ./n8n-cli.py logs           # View logs
-   ./n8n-cli.py logs n8n       # View specific service logs
-   ```
+**🔧 Smart Configuration**:
+- Automatic Python environment setup
+- Custom port configuration for all services
+- Conditional prompts based on service selection
+- Environment-specific optimizations
 
-**Enhanced CLI Features**:
-- 🎨 Rich colors and formatting
-- 📊 Progress bars and spinners
-- 🔄 Interactive service selection
-- 📋 Formatted tables and panels
-- ⚡ Real-time status updates
+**🚀 Complete Automation**:
+- Dependency checking and installation
+- Docker Compose generation
+- SSL certificate preparation
+- Service startup and validation
 
 ## 🎯 Usage Scenarios
 
@@ -183,22 +177,23 @@ Required for automatic SSL certificates:
 
 ```
 n8n-raspberry-pi-setup/
-├── setup.sh                    # Main setup script
-├── .env.example                # Environment variables template
-├── docker-compose.template.yml # Legacy template (for reference)
-├── templates/                  # Modular service templates
-│   ├── base.yml               # Core n8n service
-│   ├── traefik.yml            # Reverse proxy + SSL
-│   ├── qdrant.yml             # Vector database
-│   ├── postgres.yml           # PostgreSQL database
-│   ├── nginx.yml              # Web server
-│   └── monitoring.yml         # Portainer monitoring
+├── install.sh                 # 🚀 Unified installation script (main entry point)
+├── CLAUDE.md                  # Developer guide for Claude Code instances
+├── README.md                  # This documentation file
+├── docker-compose.yml         # Generated Docker Compose configuration
+├── .env                       # Generated environment variables (created during setup)
+├── nginx.conf                 # Nginx configuration file
 ├── static/                    # Static files directory
-│   └── robots.txt
-├── letsencrypt/               # SSL certificates storage
-│   └── acme.json
-└── README.md                  # This file
+│   └── robots.txt             # Search engine robots file
+└── letsencrypt/               # SSL certificates storage
+    └── acme.json              # Let's Encrypt certificate storage
 ```
+
+**Key Files:**
+- **`install.sh`**: The main installation script - everything you need in one file
+- **`CLAUDE.md`**: Development guide with architecture details and commands
+- **`docker-compose.yml`**: Auto-generated based on your service selections
+- **`.env`**: Auto-generated environment variables with your configuration
 
 ## 🔒 Security Features
 

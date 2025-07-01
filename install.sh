@@ -52,18 +52,27 @@ get_service_description() {
 # Configuration storage (using individual variables)
 N8N_BASIC_AUTH_USER=""
 N8N_BASIC_AUTH_PASSWORD=""
+N8N_PORT="5678"
+N8N_COMMUNITY_PACKAGES="true"
+N8N_FOLDERS_ENABLED="true"
 WEBHOOK_URL=""
 CERTIFICATE_EMAIL=""
 CF_DNS_API_TOKEN=""
+HTTP_PORT="80"
+HTTPS_PORT="443"
 POSTGRES_PASSWORD=""
 POSTGRES_DB=""
 POSTGRES_USER=""
+POSTGRES_PORT="5432"
 QDRANT_STORAGE=""
 QDRANT_DASHBOARD=""
+QDRANT_PORT="6333"
 NGINX_PURPOSE=""
 NGINX_STATIC_DIR=""
+NGINX_PORT="8080"
 PORTAINER_PASSWORD=""
 PORTAINER_USER=""
+PORTAINER_PORT="9000"
 
 # =============================================================================
 # Enhanced CLI Functions (Claude Code Style)
@@ -374,12 +383,33 @@ configure_n8n() {
     done
     N8N_BASIC_AUTH_PASSWORD="$n8n_password"
     
-    # Set webhook URL
+    # Configure access method and ports
     if [[ " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
         read -p "Domain name (e.g., n8n.yourdomain.com): " domain
         WEBHOOK_URL="$domain"
+        tool_result "Access via domain: https://$domain"
     else
-        WEBHOOK_URL="localhost:5678"
+        echo -e "${BLUE}Port Configuration:${NC}"
+        read -p "n8n port [5678]: " n8n_port
+        N8N_PORT="${n8n_port:-5678}"
+        WEBHOOK_URL="localhost:${N8N_PORT}"
+        tool_result "Access via port: http://localhost:${N8N_PORT}"
+    fi
+    
+    # Advanced settings
+    echo -e "${BLUE}Advanced Options:${NC}"
+    read -p "Enable community packages? [Y/n]: " enable_community
+    if [[ $enable_community =~ ^[Nn]$ ]]; then
+        N8N_COMMUNITY_PACKAGES="false"
+    else
+        N8N_COMMUNITY_PACKAGES="true"
+    fi
+    
+    read -p "Enable folders feature? [Y/n]: " enable_folders
+    if [[ $enable_folders =~ ^[Nn]$ ]]; then
+        N8N_FOLDERS_ENABLED="false"
+    else
+        N8N_FOLDERS_ENABLED="true"
     fi
     
     tool_result "n8n configuration completed"
@@ -391,7 +421,16 @@ configure_traefik() {
     read -p "Email for Let's Encrypt certificates: " cert_email
     CERTIFICATE_EMAIL="$cert_email"
     
-    echo "SSL certificate method:"
+    # Port configuration
+    echo -e "${BLUE}Port Configuration:${NC}"
+    read -p "HTTP port [80]: " http_port
+    HTTP_PORT="${http_port:-80}"
+    
+    read -p "HTTPS port [443]: " https_port
+    HTTPS_PORT="${https_port:-443}"
+    
+    # SSL configuration
+    echo -e "${BLUE}SSL Certificate Method:${NC}"
     echo "1. Cloudflare DNS (recommended)"
     echo "2. HTTP challenge"
     read -p "Choose method [1]: " ssl_method
@@ -402,6 +441,7 @@ configure_traefik() {
         CF_DNS_API_TOKEN="$cf_token"
     fi
     
+    tool_result "Traefik ports: HTTP:${HTTP_PORT}, HTTPS:${HTTPS_PORT}"
     tool_result "Traefik configuration completed"
 }
 
@@ -413,6 +453,14 @@ configure_postgres() {
     POSTGRES_DB="n8n"
     POSTGRES_USER="n8n"
     
+    # Port configuration (only needed if not using Traefik)
+    if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+        echo -e "${BLUE}Port Configuration:${NC}"
+        read -p "PostgreSQL port [5432]: " postgres_port
+        POSTGRES_PORT="${postgres_port:-5432}"
+        tool_result "PostgreSQL port: ${POSTGRES_PORT}"
+    fi
+    
     tool_result "Generated secure database password"
     tool_result "Database: n8n, User: n8n"
 }
@@ -422,6 +470,14 @@ configure_qdrant() {
     
     QDRANT_STORAGE="persistent"
     QDRANT_DASHBOARD="true"
+    
+    # Port configuration (only needed if not using Traefik)
+    if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+        echo -e "${BLUE}Port Configuration:${NC}"
+        read -p "Qdrant port [6333]: " qdrant_port
+        QDRANT_PORT="${qdrant_port:-6333}"
+        tool_result "Qdrant port: ${QDRANT_PORT}"
+    fi
     
     tool_result "Persistent storage enabled"
     tool_result "Dashboard access enabled"
@@ -433,6 +489,14 @@ configure_nginx() {
     NGINX_PURPOSE="static"
     NGINX_STATIC_DIR="./static"
     
+    # Port configuration (only needed if not using Traefik)
+    if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+        echo -e "${BLUE}Port Configuration:${NC}"
+        read -p "Nginx port [8080]: " nginx_port
+        NGINX_PORT="${nginx_port:-8080}"
+        tool_result "Nginx port: ${NGINX_PORT}"
+    fi
+    
     tool_result "Static file server configured"
 }
 
@@ -442,6 +506,14 @@ configure_monitoring() {
     read -p "Portainer admin password: " portainer_password
     PORTAINER_PASSWORD="$portainer_password"
     PORTAINER_USER="admin"
+    
+    # Port configuration (only needed if not using Traefik)
+    if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+        echo -e "${BLUE}Port Configuration:${NC}"
+        read -p "Portainer port [9000]: " portainer_port
+        PORTAINER_PORT="${portainer_port:-9000}"
+        tool_result "Portainer port: ${PORTAINER_PORT}"
+    fi
     
     tool_result "Portainer admin configured"
 }
@@ -465,19 +537,20 @@ generate_configuration() {
 N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
 N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
 WEBHOOK_URL=${WEBHOOK_URL}
-N8N_COMMUNITY_PACKAGES=true
-N8N_FOLDERS_ENABLED=true
+N8N_PORT=${N8N_PORT}
+N8N_COMMUNITY_PACKAGES=${N8N_COMMUNITY_PACKAGES}
+N8N_FOLDERS_ENABLED=${N8N_FOLDERS_ENABLED}
 
 EOF
 
-    local env_vars=5
+    local env_vars=6
     
     # Add service-specific configuration
     if [[ " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
         cat >> .env << EOF
 # Traefik Configuration
-HTTP_PORT=80
-HTTPS_PORT=443
+HTTP_PORT=${HTTP_PORT}
+HTTPS_PORT=${HTTPS_PORT}
 CERTIFICATE_EMAIL=${CERTIFICATE_EMAIL}
 CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
 
@@ -491,9 +564,30 @@ EOF
 POSTGRES_DB=${POSTGRES_DB}
 POSTGRES_USER=${POSTGRES_USER}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+POSTGRES_PORT=${POSTGRES_PORT}
 
 EOF
-        env_vars=$((env_vars + 3))
+        env_vars=$((env_vars + 4))
+    fi
+    
+    # Add other service ports if not using Traefik
+    if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+        cat >> .env << EOF
+# Service Ports (Direct Access)
+EOF
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " qdrant " ]]; then
+            echo "QDRANT_PORT=${QDRANT_PORT}" >> .env
+            env_vars=$((env_vars + 1))
+        fi
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " nginx " ]]; then
+            echo "NGINX_PORT=${NGINX_PORT}" >> .env
+            env_vars=$((env_vars + 1))
+        fi
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " monitoring " ]]; then
+            echo "PORTAINER_PORT=${PORTAINER_PORT}" >> .env
+            env_vars=$((env_vars + 1))
+        fi
+        echo "" >> .env
     fi
     
     tool_result "Generated $env_vars environment variables"
@@ -536,7 +630,7 @@ EOF
     if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
         cat >> docker-compose.yml << 'EOF'
     ports:
-      - "5678:5678"
+      - "${N8N_PORT}:5678"
 EOF
     fi
 
@@ -564,15 +658,15 @@ EOF
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.address=:${HTTP_PORT}"
+      - "--entrypoints.websecure.address=:${HTTPS_PORT}"
       - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
       - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.myresolver.acme.email=${CERTIFICATE_EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTP_PORT}:${HTTP_PORT}"
+      - "${HTTPS_PORT}:${HTTPS_PORT}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./letsencrypt:/letsencrypt"
@@ -599,6 +693,75 @@ EOF
     networks:
       - n8n-network
 EOF
+                # Add port mapping if not using Traefik
+                if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+                    cat >> docker-compose.yml << 'EOF'
+    ports:
+      - "${POSTGRES_PORT}:5432"
+EOF
+                fi
+                ;;
+            qdrant)
+                cat >> docker-compose.yml << 'EOF'
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    networks:
+      - n8n-network
+    volumes:
+      - qdrant_data:/qdrant/storage
+EOF
+                # Add port mapping if not using Traefik
+                if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+                    cat >> docker-compose.yml << 'EOF'
+    ports:
+      - "${QDRANT_PORT}:6333"
+EOF
+                fi
+                ;;
+            nginx)
+                cat >> docker-compose.yml << 'EOF'
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./static:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - n8n-network
+EOF
+                # Add port mapping if not using Traefik
+                if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+                    cat >> docker-compose.yml << 'EOF'
+    ports:
+      - "${NGINX_PORT}:80"
+EOF
+                fi
+                ;;
+            monitoring)
+                cat >> docker-compose.yml << 'EOF'
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: unless-stopped
+    networks:
+      - n8n-network
+EOF
+                # Add port mapping if not using Traefik
+                if [[ ! " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
+                    cat >> docker-compose.yml << 'EOF'
+    ports:
+      - "${PORTAINER_PORT}:9000"
+EOF
+                fi
                 ;;
         esac
     done
@@ -614,6 +777,20 @@ EOF
     if [[ " ${SELECTED_SERVICES[@]} " =~ " postgres " ]]; then
         cat >> docker-compose.yml << 'EOF'
   postgres_data:
+    driver: local
+EOF
+    fi
+    
+    if [[ " ${SELECTED_SERVICES[@]} " =~ " qdrant " ]]; then
+        cat >> docker-compose.yml << 'EOF'
+  qdrant_data:
+    driver: local
+EOF
+    fi
+    
+    if [[ " ${SELECTED_SERVICES[@]} " =~ " monitoring " ]]; then
+        cat >> docker-compose.yml << 'EOF'
+  portainer_data:
     driver: local
 EOF
     fi
@@ -677,13 +854,28 @@ show_final_summary() {
     if [[ " ${SELECTED_SERVICES[@]} " =~ " traefik " ]]; then
         tool_result "🌐 n8n: https://${WEBHOOK_URL}"
         tool_result "🔒 SSL certificates: Automatic via Let's Encrypt"
+        tool_result "🌍 Ports: HTTP:${HTTP_PORT}, HTTPS:${HTTPS_PORT}"
         
         if [[ " ${SELECTED_SERVICES[@]} " =~ " postgres " ]]; then
             tool_result "🗄️ Database: PostgreSQL (persistent storage)"
         fi
     else
-        tool_result "🌐 n8n: http://localhost:5678"
+        tool_result "🌐 n8n: http://localhost:${N8N_PORT}"
         tool_result "📝 Note: No SSL encryption (local access only)"
+        
+        # Show other service ports
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " postgres " ]]; then
+            tool_result "🗄️ PostgreSQL: localhost:${POSTGRES_PORT}"
+        fi
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " qdrant " ]]; then
+            tool_result "🔍 Qdrant: http://localhost:${QDRANT_PORT}"
+        fi
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " nginx " ]]; then
+            tool_result "🌐 Nginx: http://localhost:${NGINX_PORT}"
+        fi
+        if [[ " ${SELECTED_SERVICES[@]} " =~ " monitoring " ]]; then
+            tool_result "🔧 Portainer: http://localhost:${PORTAINER_PORT}"
+        fi
     fi
     
     echo

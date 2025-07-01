@@ -74,6 +74,31 @@ A comprehensive, modular setup script for deploying n8n (workflow automation) wi
 | `./setup.sh --debug` | Generate configuration without starting services |
 | `./setup.sh --help` | Show help and usage information |
 
+### Enhanced CLI (Optional)
+
+For a more modern CLI experience with rich formatting and interactive menus:
+
+1. **Install enhanced CLI tools**:
+   ```bash
+   ./install-cli.sh
+   ```
+
+2. **Use the enhanced CLI**:
+   ```bash
+   ./n8n-cli.py setup          # Interactive setup with rich formatting
+   ./n8n-cli.py setup --debug  # Debug mode
+   ./n8n-cli.py status         # Check service status
+   ./n8n-cli.py logs           # View logs
+   ./n8n-cli.py logs n8n       # View specific service logs
+   ```
+
+**Enhanced CLI Features**:
+- 🎨 Rich colors and formatting
+- 📊 Progress bars and spinners
+- 🔄 Interactive service selection
+- 📋 Formatted tables and panels
+- ⚡ Real-time status updates
+
 ## 🎯 Usage Scenarios
 
 ### 1. Quick Start (Recommended)
